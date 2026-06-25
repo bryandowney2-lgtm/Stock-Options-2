@@ -53,5 +53,21 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add results/
-          git diff --staged --quiet || git commit -m "Scan results $(date -u +%Y-%m-%d)"
-          git push
+          # Nothing to commit? Exit cleanly.
+          if git diff --staged --quiet; then
+            echo "No new results to commit."
+            exit 0
+          fi
+          git commit -m "Scan results $(date -u +%Y-%m-%d %H:%M UTC)"
+          # If main moved while we were running (e.g. you pushed an edit),
+          # rebase on top of it and retry the push a few times.
+          for attempt in 1 2 3; do
+            if git push; then
+              echo "Pushed results."
+              exit 0
+            fi
+            echo "Push rejected; pulling latest and retrying..."
+            git pull --rebase origin main || true
+          done
+          echo "Could not push after retries."
+          exit 1
