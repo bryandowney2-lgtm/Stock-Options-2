@@ -343,8 +343,14 @@ def main():
         except Exception as e:
             print(f"Could not read watchlist {args.watchlist}: {e}")
     # de-dupe preserving order
-    seen, tickers = set(), [t for t in (x.upper() for x in tickers)
-                            if not (t in seen or seen.add(t))]
+    seen = set()
+    deduped = []
+    for x in tickers:
+        t = x.upper()
+        if t not in seen:
+            seen.add(t)
+            deduped.append(t)
+    tickers = deduped
     if not tickers:
         p.error("No tickers given. Pass them as arguments or use --watchlist FILE.")
 
